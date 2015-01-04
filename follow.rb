@@ -3,7 +3,7 @@ require 'dotenv'
 
 Dotenv.load
 
-SLEEP_TIME = 30
+SLEEP_TIME = 15
 silent     = ARGV.include?('--silent') || ARGV.include?('-s')
 
 # See http://stackoverflow.com/a/10263337
