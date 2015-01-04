@@ -4,6 +4,7 @@ require 'dotenv'
 Dotenv.load
 
 SLEEP_TIME = 15
+RETRIES    = 3
 silent     = ARGV.include?('--silent') || ARGV.include?('-s')
 
 # See http://stackoverflow.com/a/10263337
@@ -17,6 +18,24 @@ def show_wait_cursor(seconds, fps=10)
   }
 end
 
+# See http://stackoverflow.com/a/9020844
+def retryable(options = {})
+  opts = { :tries => 1, :on => Exception }.merge(options)
+
+  retry_exception, retries = opts[:on], opts[:tries]
+
+  begin
+    return yield
+  rescue retry_exception
+    if (retries -= 1) > 0
+      sleep SLEEP_TIME
+      retry
+    else
+      raise
+    end
+  end
+end
+
 client = Twitter::REST::Client.new do |config|
   config.consumer_key        = ENV['TWITTER_CONSUMER_KEY']
   config.consumer_secret     = ENV['TWITTER_CONSUMER_SECRET']
@@ -26,9 +45,16 @@ end
 
 File.readlines('follow.txt').each do |line|
   username = line.split('/').pop
-  client.follow(username)
 
-  puts "Followed @#{username}" unless silent
+  begin
+    retryable(tries: RETRIES, on: Twitter::Error) do
+      client.follow(username)
+    end
+  rescue
+    puts "Failed to follow @{username} after #{RETRIES} retries."
+  else
+    puts "Followed @#{username}" unless silent
+  end
 
   # Avoid rate limit issues with Twitter API.
   if silent
