@@ -3,7 +3,7 @@ require 'dotenv'
 
 Dotenv.load
 
-SLEEP_TIME = 15
+SLEEP_TIME = 60
 RETRIES    = 3
 silent     = ARGV.include?('--silent') || ARGV.include?('-s')
 
@@ -44,14 +44,14 @@ client = Twitter::REST::Client.new do |config|
 end
 
 File.readlines('follow.txt').each do |line|
-  username = line.split('/').pop
+  username = line.split('/').pop.strip
 
   begin
     retryable(tries: RETRIES, on: Twitter::Error) do
       client.follow(username)
     end
   rescue
-    puts "Failed to follow @{username} after #{RETRIES} retries."
+    puts "Failed to follow @#{username} after #{RETRIES} retries."
   else
     puts "Followed @#{username}" unless silent
   end
