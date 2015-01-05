@@ -3,9 +3,10 @@ require 'dotenv'
 
 Dotenv.load
 
-SLEEP_TIME = 60
-RETRIES    = 3
-silent     = ARGV.include?('--silent') || ARGV.include?('-s')
+RETRIES           = 3
+SLEEP_TIME        = 60
+USERNAME_FILENAME = '.username'
+silent            = ARGV.include?('--silent') || ARGV.include?('-s')
 
 # See http://stackoverflow.com/a/10263337
 def show_wait_cursor(seconds, fps=10)
@@ -43,8 +44,16 @@ client = Twitter::REST::Client.new do |config|
   config.access_token_secret = ENV['TWITTER_ACCESS_SECRET']
 end
 
-File.readlines('follow.txt').each do |line|
-  username = line.split('/').pop.strip
+urls = File.readlines('follow.txt').map(&:strip)
+
+if File.exist? USERNAME_FILENAME
+  last_url       = File.read(USERNAME_FILENAME)
+  last_url_index = urls.index(last_url)
+  urls           = urls[(last_url_index + 1)..-1]
+end
+
+urls.each do |line|
+  username = line.split('/').pop
 
   begin
     retryable(tries: RETRIES, on: Twitter::Error) do
@@ -54,6 +63,7 @@ File.readlines('follow.txt').each do |line|
     puts "Failed to follow @#{username} after #{RETRIES} retries."
   else
     puts "Followed @#{username}" unless silent
+    File.write(USERNAME_FILENAME, line)
   end
 
   # Avoid rate limit issues with Twitter API.
