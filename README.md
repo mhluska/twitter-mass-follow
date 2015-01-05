@@ -21,4 +21,8 @@ TWITTER_ACCESS_TOKEN=<token>
 TWITTER_ACCESS_SECRET=<secret>
 ```
 
-- Run the script with `bundle exec ruby follow.rb`. Or run it in the background with `bundle exec ruby follow.rb --silent &`.
+- Run the script with `$ ruby follow.rb`. Or run it in the background with `$ ruby follow.rb --silent &`.
+
+- Reset `follow.txt` checkpoint with `$ rm .username`
+
+
